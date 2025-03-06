@@ -17,6 +17,7 @@
 #define KEYPAD_NUMBER_OF_COLS                    4
 #define EVENT_MAX_STORAGE                      100
 #define EVENT_NAME_MAX_LENGTH                   14
+#define Dangerous_Gas_Level                    1000
 
 //=====[Declaration of public data types]======================================
 
@@ -34,7 +35,7 @@ typedef struct systemEvent {
 //=====[Declaration and initialization of public global objects]===============
 
 DigitalIn alarmTestButton(BUTTON1);
-DigitalIn mq2(PE_12);
+
 
 DigitalOut alarmLed(LED1);
 DigitalOut incorrectCodeLed(LED3);
@@ -45,6 +46,7 @@ DigitalInOut sirenPin(PE_10);
 UnbufferedSerial uartUsb(USBTX, USBRX, 115200);
 
 AnalogIn lm35(A1);
+AnalogIn GasSen0127(A2);
 
 DigitalOut keypadRowPins[KEYPAD_NUMBER_OF_ROWS] = {PB_3, PB_5, PC_7, PA_15};
 DigitalIn keypadColPins[KEYPAD_NUMBER_OF_COLS]  = {PB_12, PB_13, PB_15, PC_6};
@@ -76,6 +78,8 @@ float lm35ReadingsAverage  = 0.0;
 float lm35ReadingsSum      = 0.0;
 float lm35ReadingsArray[NUMBER_OF_AVG_SAMPLES];
 float lm35TempC            = 0.0;
+float Gas_Level            = 0.0;
+float GasSenRead           = 0.0;
 
 int accumulatedDebounceMatrixKeypadTime = 0;
 int matrixKeypadCodeIndex = 0;
@@ -111,6 +115,7 @@ void systemElementStateUpdate( bool lastState,
 float celsiusToFahrenheit( float tempInCelsiusDegrees );
 float analogReadingScaledWithTheLM35Formula( float analogReading );
 void lm35ReadingsArrayInit();
+float GasSen0127V(float analogRead);
 
 void matrixKeypadInit();
 char matrixKeypadScan();
@@ -172,8 +177,8 @@ void alarmActivationUpdate()
     } else {
         overTempDetector = OFF;
     }
-
-    if( !mq2) {
+    Gas_Level = GasSen0127V(GasSenRead);
+    if( Gas_Level > Dangerous_Gas_Level ) {
         gasDetectorState = ON;
         alarmState = ON;
     }
@@ -270,7 +275,7 @@ void uartTask()
                 break;
 
             case '2':
-                if ( !mq2 ) {
+                if ( gasDetectorState ) {
                     uartUsb.write( "Gas is being detected\r\n", 22);
                 } else {
                     uartUsb.write( "Gas is not being detected\r\n", 27);
@@ -334,6 +339,14 @@ void uartTask()
                 uartUsb.write( str, stringLength );
                 break;
 
+            case 'g':
+            case 'G':
+                GasSenRead = GasSen0127.read();
+                sprintf ( str, "Gas Quantity: %.2f  ppm\r\n",
+                          GasSen0127V( GasSenRead ) );
+                stringLength = strlen(str);
+                uartUsb.write( str, stringLength );
+                break;
             case 'f':
             case 'F':
                 sprintf ( str, "Temperature: %.2f \xB0 F\r\n",
@@ -470,8 +483,8 @@ void eventLogUpdate()
     systemElementStateUpdate( alarmLastState, alarmState, "ALARM" );
     alarmLastState = alarmState;
 
-    systemElementStateUpdate( gasLastState, !mq2, "GAS_DET" );
-    gasLastState = !mq2;
+    systemElementStateUpdate( gasLastState, gasDetectorState, "GAS_DET" );
+    gasLastState = !gasDetectorState;
 
     systemElementStateUpdate( tempLastState, overTempDetector, "OVER_TEMP" );
     tempLastState = overTempDetector;
@@ -606,4 +619,7 @@ char matrixKeypadUpdate()
     }
     return keyReleased;
 }
-
+float GasSen0127V(float analogRead)
+{
+    return (analogRead*4800);
+}
