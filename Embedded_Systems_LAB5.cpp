@@ -124,7 +124,6 @@ void matrixKeypadInit();
 char matrixKeypadScan();
 char matrixKeypadUpdate();
 
-
 //=====[Main function, the program entry point after power on or reset]========
 
 int main()
@@ -182,7 +181,7 @@ void alarmActivationUpdate()
     } else {
         overTempDetector = OFF;
     }
-    Gas_Level = GasSen0127V(GasSen0127);
+    Gas_Level = GasSen0127V(GasSenRead);
     if( Gas_Level > Dangerous_Gas_Level ) {
         gasDetectorState = ON;
         alarmState = ON;
@@ -197,7 +196,10 @@ void alarmActivationUpdate()
         alarmState = ON;
     }
     if( alarmState ) {
-
+        for (int Display = 0; Display < 1; Display ++) {
+            uartUsb.write("Enter Deactivation code to reset alarm!\r\n\r\n", 45);
+            continue;
+        }
         accumulatedTimeAlarm = accumulatedTimeAlarm + TIME_INCREMENT_MS;
         sirenPin.output();
         sirenPin = LOW;
@@ -340,7 +342,7 @@ void uartTask()
 
             case 'c':
             case 'C':
-                sprintf ( str, "Temperature: %.2f C\r\n", lm35TempC );
+                sprintf ( str, "Temperature: %.2f  C\r\n", lm35TempC );
                 stringLength = strlen(str);
                 uartUsb.write( str, stringLength );
                 break;
@@ -501,9 +503,6 @@ void eventLogUpdate()
 
     systemElementStateUpdate( SBLastState, systemBlockedLed, "LED_SB" );
     SBLastState = systemBlockedLed;
-
-
-
 }
 
 void systemElementStateUpdate( bool lastState,
@@ -637,6 +636,5 @@ void displayStartupMessage()
 {
     uartUsb.write("Monitoring!\r\n", 13);
     availableCommands();
-
 }
 
