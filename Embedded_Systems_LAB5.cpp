@@ -124,6 +124,7 @@ void matrixKeypadInit();
 char matrixKeypadScan();
 char matrixKeypadUpdate();
 
+
 //=====[Main function, the program entry point after power on or reset]========
 
 int main()
@@ -181,7 +182,7 @@ void alarmActivationUpdate()
     } else {
         overTempDetector = OFF;
     }
-    Gas_Level = GasSen0127V(GasSenRead);
+    Gas_Level = GasSen0127V(GasSen0127);
     if( Gas_Level > Dangerous_Gas_Level ) {
         gasDetectorState = ON;
         alarmState = ON;
@@ -196,6 +197,7 @@ void alarmActivationUpdate()
         alarmState = ON;
     }
     if( alarmState ) {
+
         accumulatedTimeAlarm = accumulatedTimeAlarm + TIME_INCREMENT_MS;
         sirenPin.output();
         sirenPin = LOW;
@@ -246,7 +248,6 @@ void alarmDeactivationUpdate()
                 }
             } else {
                 if ( alarmState ) {
-                    uartUsb.write("\r\nEnter deactivation code: ", 28);
                     if ( areEqual() ) {
                         alarmState = OFF;
                         numberOfIncorrectCodes = 0;
@@ -339,7 +340,7 @@ void uartTask()
 
             case 'c':
             case 'C':
-                sprintf ( str, "Temperature: %.2f \xB0 C\r\n", lm35TempC );
+                sprintf ( str, "Temperature: %.2f C\r\n", lm35TempC );
                 stringLength = strlen(str);
                 uartUsb.write( str, stringLength );
                 break;
@@ -354,7 +355,7 @@ void uartTask()
                 break;
             case 'f':
             case 'F':
-                sprintf ( str, "Temperature: %.2f \xB0 F\r\n",
+                sprintf ( str, "Temperature: %.2f F\r\n",
                           celsiusToFahrenheit( lm35TempC ) );
                 stringLength = strlen(str);
                 uartUsb.write( str, stringLength );
@@ -464,6 +465,7 @@ void availableCommands()
     uartUsb.write( "Press '4' to enter the code sequence\r\n", 38 );
     uartUsb.write( "Press '5' to enter a new code\r\n", 31 );
     uartUsb.write( "Press 'f' or 'F' to get lm35 reading in Fahrenheit\r\n", 52 );
+    uartUsb.write( "Press 'g' or 'G' to get the Gas measurement\r\n", 47 );
     uartUsb.write( "Press 'c' or 'C' to get lm35 reading in Celsius\r\n", 49 );
     uartUsb.write( "Press 's' or 'S' to set the date and time\r\n", 43 );
     uartUsb.write( "Press 't' or 'T' to get the date and time\r\n", 43 );
@@ -499,6 +501,9 @@ void eventLogUpdate()
 
     systemElementStateUpdate( SBLastState, systemBlockedLed, "LED_SB" );
     SBLastState = systemBlockedLed;
+
+
+
 }
 
 void systemElementStateUpdate( bool lastState,
@@ -632,5 +637,6 @@ void displayStartupMessage()
 {
     uartUsb.write("Monitoring!\r\n", 13);
     availableCommands();
+
 }
 
