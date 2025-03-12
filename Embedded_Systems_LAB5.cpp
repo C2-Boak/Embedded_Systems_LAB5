@@ -73,6 +73,7 @@ bool SBLastState           = OFF;
 
 bool gasDetectorState          = OFF;
 bool overTempDetectorState     = OFF;
+bool alarmMessageDisplayed = false;
 
 float potentiometerReading = 0.0;
 float lm35ReadingsAverage  = 0.0;
@@ -181,7 +182,7 @@ void alarmActivationUpdate()
     } else {
         overTempDetector = OFF;
     }
-    Gas_Level = GasSen0127V(GasSenRead);
+    Gas_Level = GasSen0127V(GasSen0127);
     if( Gas_Level > Dangerous_Gas_Level ) {
         gasDetectorState = ON;
         alarmState = ON;
@@ -196,13 +197,15 @@ void alarmActivationUpdate()
         alarmState = ON;
     }
     if( alarmState ) {
-        for (int Display = 0; Display < 1; Display ++) {
+
+        if (!alarmMessageDisplayed) {
             uartUsb.write("Enter Deactivation code to reset alarm!\r\n\r\n", 45);
-            continue;
+            alarmMessageDisplayed = true;
         }
         accumulatedTimeAlarm = accumulatedTimeAlarm + TIME_INCREMENT_MS;
         sirenPin.output();
         sirenPin = LOW;
+
 
         if( gasDetectorState && overTempDetectorState ) {
             if( accumulatedTimeAlarm >= BLINKING_TIME_GAS_AND_OVER_TEMP_ALARM ) {
@@ -227,7 +230,6 @@ void alarmActivationUpdate()
         sirenPin.input();
     }
 }
-
 void alarmDeactivationUpdate()
 {
     if ( numberOfIncorrectCodes < 5 ) {
@@ -254,6 +256,7 @@ void alarmDeactivationUpdate()
                         alarmState = OFF;
                         numberOfIncorrectCodes = 0;
                         matrixKeypadCodeIndex = 0;
+                        alarmMessageDisplayed = false;
                     } else {
                         incorrectCodeLed = ON;
                         numberOfIncorrectCodes++;
