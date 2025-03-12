@@ -3,6 +3,7 @@
 #include "mbed.h"
 #include "arm_book_lib.h"
 #include "string.h"
+#include "ctime"
 
 //=====[Defines]===============================================================
 
@@ -198,7 +199,7 @@ void alarmActivationUpdate(){
     if( alarmState ) {
 
         if (!alarmMessageDisplayed) {
-            uartUsb.write("Enter Deactivation code to reset alarm!\r\n\r\n", 45);
+            uartUsb.write("Enter Deactivation code to reset alarm!\r\n\r\n", 42);
             alarmMessageDisplayed = true;
 
             if (eventsIndex < EVENT_MAX_STORAGE) {
@@ -206,8 +207,14 @@ void alarmActivationUpdate(){
                 arrayOfStoredEvents[eventsIndex].seconds = currentTime;
                 strcpy(arrayOfStoredEvents[eventsIndex].typeOfEvent, "ALARM TRIGGERED");
                 eventsIndex++;
+
+                char timeStr[50];
+                sprintf(timeStr, "Date and Time = %s\r\n", ctime(&currentTime));
+                uartUsb.write(timeStr, strlen(timeStr));
             }
         }
+
+
 
         accumulatedTimeAlarm = accumulatedTimeAlarm + TIME_INCREMENT_MS;
         sirenPin.output();
