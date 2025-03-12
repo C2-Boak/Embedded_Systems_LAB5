@@ -202,6 +202,14 @@ void alarmActivationUpdate()
             uartUsb.write("Enter Deactivation code to reset alarm!\r\n\r\n", 45);
             alarmMessageDisplayed = true;
         }
+
+        if (eventsIndex < EVENT_MAX_STORAGE) {
+            time_t currentTime = time(NULL);
+            arrayOfStoredEvents[eventsIndex].seconds = currentTime;
+            strcpy(arrayOfStoredEvents[eventsIndex].typeOfEvent, "ALARM TRIGGERED");
+            eventsIndex++;
+        }
+
         accumulatedTimeAlarm = accumulatedTimeAlarm + TIME_INCREMENT_MS;
         sirenPin.output();
         sirenPin = LOW;
