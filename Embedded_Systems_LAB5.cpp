@@ -2,6 +2,7 @@
 
 #include "mbed.h"
 #include "arm_book_lib.h"
+#include "string.h"
 
 //=====[Defines]===============================================================
 
@@ -111,6 +112,8 @@ void eventLogUpdate();
 void systemElementStateUpdate( bool lastState,
                                bool currentState,
                                const char* elementName );
+void displayStartupMessage();
+
 
 float celsiusToFahrenheit( float tempInCelsiusDegrees );
 float analogReadingScaledWithTheLM35Formula( float analogReading );
@@ -127,6 +130,7 @@ int main()
 {
     inputsInit();
     outputsInit();
+    displayStartupMessage();
     while (true) {
         alarmActivationUpdate();
         alarmDeactivationUpdate();
@@ -242,6 +246,7 @@ void alarmDeactivationUpdate()
                 }
             } else {
                 if ( alarmState ) {
+                    uartUsb.write("\r\nEnter deactivation code: ", 28);
                     if ( areEqual() ) {
                         alarmState = OFF;
                         numberOfIncorrectCodes = 0;
@@ -484,7 +489,7 @@ void eventLogUpdate()
     alarmLastState = alarmState;
 
     systemElementStateUpdate( gasLastState, gasDetectorState, "GAS_DET" );
-    gasLastState = !gasDetectorState;
+    gasLastState = gasDetectorState;
 
     systemElementStateUpdate( tempLastState, overTempDetector, "OVER_TEMP" );
     tempLastState = overTempDetector;
@@ -623,3 +628,9 @@ float GasSen0127V(float analogRead)
 {
     return (analogRead*4800);
 }
+void displayStartupMessage()
+{
+    uartUsb.write("Monitoring!\r\n", 13);
+    availableCommands();
+}
+
