@@ -461,7 +461,7 @@ void uartTask()
 
             case 'e':
             case 'E':
-                for (int i = 0; i < eventsIndex; i++) {
+                for (int i = 0; i < 5; i++) {//total log < inventIndex
                     sprintf ( str, "Event = %s\r\n",
                               arrayOfStoredEvents[i].typeOfEvent);
                     uartUsb.write( str , strlen(str) );
