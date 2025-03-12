@@ -159,8 +159,7 @@ void outputsInit()
     systemBlockedLed = OFF;
 }
 
-void alarmActivationUpdate()
-{
+void alarmActivationUpdate(){
     static int lm35SampleIndex = 0;
     int i = 0;
 
@@ -201,13 +200,13 @@ void alarmActivationUpdate()
         if (!alarmMessageDisplayed) {
             uartUsb.write("Enter Deactivation code to reset alarm!\r\n\r\n", 45);
             alarmMessageDisplayed = true;
-        }
 
-        if (eventsIndex < EVENT_MAX_STORAGE) {
-            time_t currentTime = time(NULL);
-            arrayOfStoredEvents[eventsIndex].seconds = currentTime;
-            strcpy(arrayOfStoredEvents[eventsIndex].typeOfEvent, "ALARM TRIGGERED");
-            eventsIndex++;
+            if (eventsIndex < EVENT_MAX_STORAGE) {
+                time_t currentTime = time(NULL);
+                arrayOfStoredEvents[eventsIndex].seconds = currentTime;
+                strcpy(arrayOfStoredEvents[eventsIndex].typeOfEvent, "ALARM TRIGGERED");
+                eventsIndex++;
+            }
         }
 
         accumulatedTimeAlarm = accumulatedTimeAlarm + TIME_INCREMENT_MS;
@@ -225,21 +224,22 @@ void alarmActivationUpdate()
                 accumulatedTimeAlarm = 0;
                 alarmLed = !alarmLed;
             }
+
         } else if ( overTempDetectorState ) {
             if( accumulatedTimeAlarm >= BLINKING_TIME_OVER_TEMP_ALARM  ) {
                 accumulatedTimeAlarm = 0;
                 alarmLed = !alarmLed;
             }
+
         }
-    } else{
+    }else{
         alarmLed = OFF;
         gasDetectorState = OFF;
         overTempDetectorState = OFF;
         sirenPin.input();
     }
 }
-void alarmDeactivationUpdate()
-{
+void alarmDeactivationUpdate(){
     if ( numberOfIncorrectCodes < 5 ) {
         char keyReleased = matrixKeypadUpdate();
         if( keyReleased != '\0' && keyReleased != '#' ) {
@@ -265,6 +265,11 @@ void alarmDeactivationUpdate()
                         numberOfIncorrectCodes = 0;
                         matrixKeypadCodeIndex = 0;
                         alarmMessageDisplayed = false;
+
+                        sirenPin.input();
+                        sirenPin = HIGH;
+                        alarmLed = 0;
+
                     } else {
                         incorrectCodeLed = ON;
                         numberOfIncorrectCodes++;
@@ -276,7 +281,6 @@ void alarmDeactivationUpdate()
         systemBlockedLed = ON;
     }
 }
-
 void uartTask()
 {
     char receivedChar = '\0';
